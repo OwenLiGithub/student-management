@@ -1,0 +1,381 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<meta charset="UTF-8">
+
+<head>
+    <title></title>
+    <!--ExtJs框架开始-->
+    <script type="text/javascript" src="../ext-3.3.0/adapter/ext/ext-base.js"></script>
+    <script type="text/javascript" src="../ext-3.3.0/ext-all.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="../ext-3.3.0/resources/css/ext-all.css" />
+    <script type="text/javascript" src="PagingMemoryProxy.js"></script>
+    <!--ExtJs框架结束-->
+    <style>
+        .edit-icon {
+            background-image: url(edit.png) !important;
+        }
+
+        .reset-icon {
+            background-image: url(reset.png) !important;
+        }
+
+        .insert-icon {
+            background-image: url(insert.png) !important;
+        }
+
+        .table-icon {
+            background-image: url(table.png) !important;
+        }
+    </style>
+    <script type="text/javascript">
+        Ext.onReady(function () {
+            var selectedRow;
+            var selectionModel = new Ext.grid.CheckboxSelectionModel({
+                handleMouseDown: Ext.emptyFn
+            })
+            var cm = new Ext.grid.ColumnModel([
+                new Ext.grid.RowNumberer(),
+                selectionModel,
+                {
+                    header: '学号',
+                    dataIndex: 'id',
+                    sortable: true,
+                    editor: new Ext.grid.GridEditor(new Ext.form.NumberField({
+                        allowBlank: false,
+                        allowNegative: false,
+                        maxValue: 10
+                    }))
+                }, {
+                    header: '性别',
+                    dataIndex: 'sex',
+                    renderer: renderSex
+                }, {
+                    header: '姓名',
+                    dataIndex: 'name',
+                    sortable: true,
+                    editor: new Ext.grid.GridEditor(
+                        new Ext.form.TextField({
+                            allowBlank: false
+                        })
+                    )
+                }, {
+                    header: '班级',
+                    dataIndex: 'class',
+                    sortable: true,
+                    editor: new Ext.grid.GridEditor(
+                        new Ext.form.TextField({
+                            allowBlank: false
+                        })
+                    )
+                },
+                {
+                    header: '生日',
+                    dataIndex: 'brithday',
+                    type: 'date',
+                    sortable: true,
+                    renderer: Ext.util.Format.dateRenderer('Y年m月d日'),
+                    editor: new Ext.grid.GridEditor(
+                        new Ext.form.TextField({
+                            allowBlank: false
+                        })
+                    )
+                }
+            ])
+            var data = [['1', '男', '小李', 'ita-1班', '1998-04-15T02:58:04'],
+            ['2', '男', '小王', 'ita-1班', '1988-11-15T02:58:04'],
+            ['3', '女', '小张', 'ita-1班', '1970-21-11T02:58:04'],
+            ['4', '女', '小天', 'ita-2班', '1988-01-15T02:58:04'],
+            ['5', '男', '小刘', 'ita-2班', '1999-01-12T02:58:04'],
+            ['6', '女', '小五', 'ita-2班', '2001-11-15T02:58:04'],
+            ['7', '女', '小四', 'ita-3班', '1999-08-15T02:58:04'],
+            ['8', '女', '小里', 'ita-3班', '1991-01-15T02:58:04'],
+            ['9', '女', '小破', 'ita-3班', '1999-01-17T02:58:04'],
+            ['10', '女', '搭建', 'ita-4班', '1994-01-20T02:58:04'],
+            ['11', '女', '学生', 'ita-4班', '2003-01-30T02:58:04'],
+            ['12', '女', '学生', 'ita-4班', '2004-01-15T02:58:04'],
+            ]
+            var sexstore = new Ext.data.ArrayStore({
+                fields: ['value', 'description'],
+                data: [[1, '男'], [0, '女']]
+
+            });
+            var classstore = new Ext.data.ArrayStore({
+                fields: ['value', 'description'],
+                data: [[1, 'ita-1班'], [2, 'ita-2班'], [3, 'ita-3班'], [4, 'ita-4班'],]
+
+            });
+            var store = new Ext.data.GroupingStore({
+                groupField: 'class',
+                proxy: new Ext.data.PagingMemoryProxy(data),
+                reader: new Ext.data.ArrayReader({}, [
+                    { name: 'id' },
+                    { name: 'sex' },
+                    { name: 'name' },
+                    { name: 'class' },
+                    { name: 'brithday', type: 'date', dateFormat: 'Y-m-dTH:i:s' }
+                ])
+            })
+            function renderSex(value) {
+                if (value == '男') {
+                    return '<span style="color:red;font-weight:bold;">男</span><img src="man.png"/>'
+                } else {
+                    return '<span style="color:green;font-weight:bold;">女</span><img src="womans.png"/>'
+                }
+            }
+
+            var tablePanel = new Ext.grid.EditorGridPanel({
+                title: '学生管理',
+                renderTo: 'grid',
+                autoHeight: true,
+                width: 550,
+                style: 'margin:150px auto',
+                view: new Ext.grid.GroupingView(),
+                cm: cm,
+                store: store,
+                autoHeight: true,
+                sm: selectionModel,
+                bbar: new Ext.PagingToolbar({
+                    pageSize: 5,
+                    store: store,
+                    displayInfo: true,
+                    displayMsg: '显示第 {0} 条到 {1} 条记录，一共 {2} 条',
+                    emptyMsg: "没有记录"
+                }),
+                tbar: new Ext.Toolbar([
+                    '-', {
+                        text: 'delete',
+                        handler: function () {
+                            Ext.Msg.confirm('Message', 'are you sure delete?', function (btn) {
+                                if (btn === 'yes') {
+                                    var selectionModel = tablePanel.getSelectionModel()
+                                    var selections = selectionModel.getSelections()
+                                    if (selections.length > 0) {
+                                        store.remove(selections)
+                                        tablePanel.getView().refresh();
+                                    } else {
+                                        Ext.Msg.alert('Message', 'please select a row first');
+                                    }
+                                }
+                            })
+                        }
+                    },
+                    '-', {
+                        text: 'add',
+                        handler: function () {
+                            tableWindow.show();
+                        }
+                    }
+                ]),
+                listeners: {
+                    rowcontextmenu: function (grid, rowIndex, e) {
+                        e.preventDefault();
+                        selectedRow = rowIndex;
+                        grid.getSelectionModel().selectRow(rowIndex);
+                        displayMenu.showAt(e.getXY());
+                    }
+                }
+
+            })
+
+            var studentRecord = Ext.data.Record.create([
+                { name: 'id' },
+                { name: 'sex' },
+                { name: 'name' },
+                { name: 'class' },
+                { name: 'brithday' },
+            ]);
+            var tableWindow = new Ext.Window({
+                width: 300,
+                autoHeight: 200,
+
+                minimizable: true,
+                maximizable: true,
+                plain: true,
+                items: new Ext.form.FormPanel({
+                    id: 'tableFormPanel',
+                    lableAlign: 'right',
+                    width: '100%',
+                    height: 250,
+                    butttonAlign: 'center',
+                    frame: true,
+                    items: [
+                        {
+                            layout: 'column',
+                            items: [{
+                                columnWidth: .99,
+                                xtype: 'fieldset',
+                                checkboxToggle: true,
+                                autoHeight: true,
+                                defaults: { width: 300 },
+                                items: [
+                                    {
+                                        xtype: 'numberfield',
+                                        id: 'studentNumber',
+                                        fieldLabel: '学号'
+                                    }, {
+                                        id: 'studentSex',
+                                        xtype: 'combo',
+                                        fieldLabel: '性别',
+                                        width: 162,
+                                        store: sexstore,
+                                        displayField: 'description',
+                                        valueField: 'value',
+                                        triggerAction: 'all',
+                                        emptyText: '请选择性别',
+                                        allowBlank: false,
+                                        editable: false,
+                                        mode: 'local',
+                                    }, {
+                                        id: 'studentName',
+                                        xtype: 'textfield',
+                                        fieldLabel: '姓名'
+                                    }, {
+                                        id: 'studentClass',
+                                        xtype: 'combo',
+                                        fieldLabel: '班级',
+                                        width: 162,
+                                        store: classstore,
+                                        displayField: 'description',
+                                        valueField: 'value',
+                                        triggerAction: 'all',
+                                        emptyText: '请选择班级',
+                                        allowBlank: false,
+                                        editable: false,
+                                        mode: 'local',
+                                    },
+                                    {
+                                        id: 'studentBrithday',
+                                        xtype: 'datefield',
+                                        fieldLabel: '生日',
+                                        emptyText: '请选择学生的生日',
+                                        format: 'Y-m-d',
+                                        disabledDays: [0, 6],
+                                        width: 160,
+
+                                    }
+                                ]
+
+                            }]
+                        }
+                    ],
+                    buttons: [
+                        {
+                            xtype: 'button',
+                            text: 'add',
+                            handler: function () {
+                                var stuRecord = new studentRecord({
+                                    id: '',
+                                    sex: '',
+                                    name: '',
+                                    class: '',
+                                    brithday: '',
+                                })
+                                var selectionModel = tablePanel.getSelectionModel()
+                                stuRecord.data.id = Ext.fly('studentNumber').dom.value
+                                stuRecord.data.sex = Ext.fly('studentSex').dom.value
+                                stuRecord.data.name = Ext.fly('studentName').dom.value
+                                stuRecord.data.class = Ext.fly('studentClass').dom.value
+                                stuRecord.data.brithday = Ext.fly('studentBrithday').dom.value
+                                var selections = selectionModel.getSelections()
+                                if (selections.length > 1) {
+                                    Ext.Msg.alert('Message', 'cant select Multiple row ');
+                                } else if (selections.length == 1) {
+                                    store.insert(store.indexOf(selections[0]), stuRecord);
+                                    tablePanel.getView().refresh();
+                                    tableWindow.hide();
+                                } else {
+                                    store.insert(0, stuRecord);
+                                    tablePanel.getView().refresh();
+                                    tableWindow.hide();
+                                }
+
+                            }
+                        }, {
+                            xtype: 'button',
+                            text: 'cancel',
+                            handler: function () {
+                                tableWindow.hide();
+                            }
+                        }
+                    ]
+
+                })
+            })
+            store.load({ params: { start: 0, limit: 5 } });
+            var resetMenu = new Ext.menu.Menu({
+                items: [
+                    {
+                        iconCls: 'reset-icon',
+                        text: 'reset',
+                        listeners: {
+                            'click': function (el) {
+                                Ext.getCmp('blog-body').reset()
+                            }
+                        }
+                    }
+                ]
+            })
+            var insertMenu = new Ext.menu.Menu({
+                items: [
+                    {
+                        iconCls: 'table-icon',
+                        text: 'table',
+                        listeners: {
+                            'click': function () {
+                                tableWindow.show();
+                            }
+                        }
+                    }
+                ]
+            })
+            var displayMenu = new Ext.menu.Menu({
+                items: [
+                    {
+                        text: "UP",
+                        handler: function () {
+                            store.remove(selectedRow);
+                            store.insert(selectedRow - 1, store.getAt(selectedRow))
+                            tablePanel.getView().refresh();
+                        }
+                    },
+                    {
+                        text: "DOWN",
+                        handler: function () {
+                            store.remove(selectedRow);
+                            store.insert(selectedRow + 1, store.getAt(selectedRow))
+                            tablePanel.getView().refresh();
+                        }
+                    },
+                    {
+                        text: "FRIST",
+                        handler: function () {
+                            store.remove(selectedRow);
+                            store.insert(0, store.getAt(selectedRow))
+                            tablePanel.getView().refresh();
+                        }
+                    },
+                    {
+                        text: "LAST",
+                        handler: function () {
+                            store.remove(selectedRow);
+                            store.insert(store.getTotalCount(), store.getAt(selectedRow))
+                            tablePanel.getView().refresh();
+                        }
+                    }
+                ]
+            })
+        });
+    </script>
+</head>
+
+
+<body>
+    <div id="grid"></div>
+
+</body>
+
+
+</html>
